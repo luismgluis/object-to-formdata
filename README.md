@@ -69,6 +69,10 @@ const options = {
    * defaults to false
    */
   dotsForObjectNotation: false,
+  /**
+   * use to get obj structure result
+   */
+  getObj: Function
 };
 
 const formData = serialize(
