@@ -6,7 +6,7 @@ export type Options = {
   noAttributesWithArrayNotation?: boolean;
   noFilesWithArrayNotation?: boolean;
   dotsForObjectNotation?: boolean;
-  getObj?: (obj: Record<string, any>) => void
+  getObj?: (obj: Record<string, any>) => void;
 };
 
 export function serialize<T = {}>(
@@ -15,3 +15,5 @@ export function serialize<T = {}>(
   existingFormData?: FormData,
   keyPrefix?: string,
 ): FormData;
+
+export function deserialize<T = {}>(object: T): Record<string, any>;
