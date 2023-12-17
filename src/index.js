@@ -128,6 +128,27 @@ function serialize(obj, cfg, fd, pre) {
   return fd;
 }
 
+function deserialize(objSerialize) {
+  for (const key in objSerialize) {
+    if (objSerialize.hasOwnProperty(key)) {
+      const originalKey = key;
+
+      if (key.startsWith('+')) {
+        objSerialize[key.slice(1)] = parseFloat(objSerialize[key]);
+        delete objSerialize[originalKey];
+      } else if (key.startsWith('&')) {
+        objSerialize[key.slice(1)] = objSerialize[key] === 'true';
+        delete objSerialize[originalKey];
+      } else if (key.startsWith('-')) {
+        objSerialize[key.slice(1)] = null;
+        delete objSerialize[originalKey];
+      }
+    }
+  }
+  return objSerialize
+}
+
 module.exports = {
   serialize,
+  deserialize
 };
