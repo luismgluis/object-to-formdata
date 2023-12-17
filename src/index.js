@@ -23,16 +23,16 @@ function isDate(value) {
 }
 
 function isNumber(value) {
-  return typeof value === "number"
+  return typeof value === 'number';
 }
 
 function isBlob(value, isReactNative) {
   return isReactNative
     ? isObject(value) && !isUndefined(value.uri)
     : isObject(value) &&
-    typeof value.size === 'number' &&
-    typeof value.type === 'string' &&
-    typeof value.slice === 'function';
+        typeof value.size === 'number' &&
+        typeof value.type === 'string' &&
+        typeof value.slice === 'function';
 }
 
 function isFile(value, isReactNative) {
@@ -47,14 +47,14 @@ function initCfg(value) {
   return isUndefined(value) ? false : value;
 }
 
-function serialize(obj, cfg, fd, pre) {
+function serialize(obj, cfg, fd, pre, isInit = true) {
   cfg = cfg || {};
   fd = fd || new FormData();
-  objResult = {}
-  fd.append = (key, value) => {
-    objResult[key] = value;
-    fd.append(key, value)
-  }
+  cfg.objResult = cfg.objResult || {};
+  fd.customAppend = (key, value) => {
+    cfg.objResult[key] = value;
+    fd.append(key, value);
+  };
 
   cfg.indices = initCfg(cfg.indices);
   cfg.nullsAsUndefineds = initCfg(cfg.nullsAsUndefineds);
@@ -68,18 +68,18 @@ function serialize(obj, cfg, fd, pre) {
 
   const isReactNative = typeof fd.getParts === 'function';
   if (isNumber(obj)) {
-    return fd.append('+' + pre, obj);
+    return fd.customAppend('+' + pre, obj);
   } else if (isUndefined(obj)) {
     return fd;
   } else if (isNull(obj)) {
     if (!cfg.nullsAsUndefineds) {
-      fd.append('-' + pre, '');
+      fd.customAppend('-' + pre, '');
     }
   } else if (isBoolean(obj)) {
     if (cfg.booleansAsIntegers) {
-      fd.append('&' + pre, obj ? 1 : 0);
+      fd.customAppend('&' + pre, obj ? 1 : 0);
     } else {
-      fd.append('&' + pre, obj);
+      fd.customAppend('&' + pre, obj);
     }
   } else if (isArray(obj)) {
     if (obj.length) {
@@ -93,13 +93,13 @@ function serialize(obj, cfg, fd, pre) {
           key = pre;
         }
 
-        serialize(value, cfg, fd, key);
+        serialize(value, cfg, fd, key, false);
       });
     } else if (cfg.allowEmptyArrays) {
-      fd.append(cfg.noAttributesWithArrayNotation ? pre : pre + '[]', '');
+      fd.customAppend(cfg.noAttributesWithArrayNotation ? pre : pre + '[]', '');
     }
   } else if (isDate(obj)) {
-    fd.append(pre, obj.toISOString());
+    fd.customAppend(pre, obj.toISOString());
   } else if (isObject(obj) && !isBlob(obj, isReactNative)) {
     Object.keys(obj).forEach((prop) => {
       const value = obj[prop];
@@ -116,14 +116,13 @@ function serialize(obj, cfg, fd, pre) {
           : pre + '[' + prop + ']'
         : prop;
 
-      serialize(value, cfg, fd, key);
+      serialize(value, cfg, fd, key, false);
     });
   } else {
-    fd.append(pre, obj);
+    fd.customAppend(pre, obj);
   }
-  if (cfg.getObj) {
-    if (typeof cfg.getObj === "function")
-      cfg.getObj(objResult)
+  if (cfg.getObj && isInit) {
+    if (typeof cfg.getObj === 'function') cfg.getObj(cfg.objResult);
   }
   return fd;
 }
@@ -145,10 +144,10 @@ function deserialize(objSerialize) {
       }
     }
   }
-  return objSerialize
+  return objSerialize;
 }
 
 module.exports = {
   serialize,
-  deserialize
+  deserialize,
 };
