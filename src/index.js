@@ -127,24 +127,62 @@ function serialize(obj, cfg, fd, pre, isInit = true) {
   return fd;
 }
 
-function deserialize(objSerialize) {
-  for (const key in objSerialize) {
-    if (objSerialize.hasOwnProperty(key)) {
+function deserialize(objSerialize = {}) {
+  const body = { ...objSerialize };
+  for (const key in body) {
+    if (typeof body[key] !== 'undefined') {
       const originalKey = key;
 
+      // Verifica si la clave tiene un prefijo específico y realiza la actualización correspondiente
       if (key.startsWith('+')) {
-        objSerialize[key.slice(1)] = parseFloat(objSerialize[key]);
-        delete objSerialize[originalKey];
+        body[key.slice(1)] = parseFloat(body[key]);
+        delete body[originalKey];
       } else if (key.startsWith('&')) {
-        objSerialize[key.slice(1)] = objSerialize[key] === 'true';
-        delete objSerialize[originalKey];
+        body[key.slice(1)] = body[key] === 'true';
+        delete body[originalKey];
       } else if (key.startsWith('-')) {
-        objSerialize[key.slice(1)] = null;
-        delete objSerialize[originalKey];
+        body[key.slice(1)] = null;
+        delete body[originalKey];
       }
     }
   }
-  return objSerialize;
+  const organizeObject = (data) => {
+    const result = {};
+
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        const value = data[key];
+        const keys = key.split('.');
+
+        const organizeNested = (obj, keysArray) => {
+          const currentKey = keysArray.shift();
+
+          const arrayIndexMatch = currentKey.match(/(\w+)\[(\d+)\]/);
+          if (arrayIndexMatch) {
+            const arrayKey = arrayIndexMatch[1];
+            const arrayIndex = parseInt(arrayIndexMatch[2], 10);
+            obj[arrayKey] = obj[arrayKey] || [];
+            obj[arrayKey][arrayIndex] = obj[arrayKey][arrayIndex] || {};
+            organizeNested(obj[arrayKey][arrayIndex], keysArray);
+          } else {
+            if (keysArray.length === 0) {
+              obj[currentKey] = value;
+            } else {
+              obj[currentKey] = obj[currentKey] || {};
+              organizeNested(obj[currentKey], keysArray);
+            }
+          }
+        };
+
+        organizeNested(result, keys);
+      }
+    }
+
+    return result;
+  };
+
+  const newBody = organizeObject(body);
+  return newBody;
 }
 
 module.exports = {
