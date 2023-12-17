@@ -22,13 +22,17 @@ function isDate(value) {
   return value instanceof Date;
 }
 
+function isNumber(value) {
+  return typeof value === "number"
+}
+
 function isBlob(value, isReactNative) {
   return isReactNative
     ? isObject(value) && !isUndefined(value.uri)
     : isObject(value) &&
-        typeof value.size === 'number' &&
-        typeof value.type === 'string' &&
-        typeof value.slice === 'function';
+    typeof value.size === 'number' &&
+    typeof value.type === 'string' &&
+    typeof value.slice === 'function';
 }
 
 function isFile(value, isReactNative) {
@@ -46,6 +50,11 @@ function initCfg(value) {
 function serialize(obj, cfg, fd, pre) {
   cfg = cfg || {};
   fd = fd || new FormData();
+  objResult = {}
+  fd.append = (key, value) => {
+    objResult[key] = value;
+    fd.append(key, value)
+  }
 
   cfg.indices = initCfg(cfg.indices);
   cfg.nullsAsUndefineds = initCfg(cfg.nullsAsUndefineds);
@@ -58,18 +67,19 @@ function serialize(obj, cfg, fd, pre) {
   cfg.dotsForObjectNotation = initCfg(cfg.dotsForObjectNotation);
 
   const isReactNative = typeof fd.getParts === 'function';
-
-  if (isUndefined(obj)) {
+  if (isNumber(obj)) {
+    return fd.append('+' + pre, obj);
+  } else if (isUndefined(obj)) {
     return fd;
   } else if (isNull(obj)) {
     if (!cfg.nullsAsUndefineds) {
-      fd.append(pre, '');
+      fd.append('-' + pre, '');
     }
   } else if (isBoolean(obj)) {
     if (cfg.booleansAsIntegers) {
-      fd.append(pre, obj ? 1 : 0);
+      fd.append('&' + pre, obj ? 1 : 0);
     } else {
-      fd.append(pre, obj);
+      fd.append('&' + pre, obj);
     }
   } else if (isArray(obj)) {
     if (obj.length) {
@@ -111,7 +121,10 @@ function serialize(obj, cfg, fd, pre) {
   } else {
     fd.append(pre, obj);
   }
-
+  if (cfg.getObj) {
+    if (typeof cfg.getObj === "function")
+      cfg.getObj(objResult)
+  }
   return fd;
 }
 

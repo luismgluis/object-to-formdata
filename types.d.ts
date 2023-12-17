@@ -6,6 +6,7 @@ export type Options = {
   noAttributesWithArrayNotation?: boolean;
   noFilesWithArrayNotation?: boolean;
   dotsForObjectNotation?: boolean;
+  getObj?: (obj: Record<string, any>) => void
 };
 
 export function serialize<T = {}>(
