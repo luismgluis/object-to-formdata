@@ -159,11 +159,14 @@ function deserialize(objSerialize = {}) {
           if (!currentKey) return;
           const arrayIndexMatch = currentKey.match(/(\w+)\[(\d+)\]/);
           if (arrayIndexMatch) {
+            const isArrayOneDimension = keysArray.length === 0;
+
             const arrayKey = arrayIndexMatch[1];
             const arrayIndex = parseInt(arrayIndexMatch[2], 10);
             obj[arrayKey] = obj[arrayKey] || [];
-            obj[arrayKey][arrayIndex] = obj[arrayKey][arrayIndex] || {};
-            organizeNested(obj[arrayKey][arrayIndex], keysArray);
+            obj[arrayKey][arrayIndex] = isArrayOneDimension ? value : obj[arrayKey][arrayIndex] || {};
+            if (!isArrayOneDimension)
+              organizeNested(obj[arrayKey][arrayIndex], keysArray);
           } else {
             if (keysArray.length === 0) {
               obj[currentKey] = value;
@@ -180,7 +183,6 @@ function deserialize(objSerialize = {}) {
 
     return result;
   };
-
   const newBody = organizeObject(body);
   return newBody;
 }
