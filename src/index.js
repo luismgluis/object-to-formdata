@@ -156,7 +156,7 @@ function deserialize(objSerialize = {}) {
 
         const organizeNested = (obj, keysArray) => {
           const currentKey = keysArray.shift();
-
+          if (!currentKey) return;
           const arrayIndexMatch = currentKey.match(/(\w+)\[(\d+)\]/);
           if (arrayIndexMatch) {
             const arrayKey = arrayIndexMatch[1];
